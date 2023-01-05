@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_1hk6of1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Zeebe Modeler" exporterVersion="0.11.0">
+  <bpmn:process id="Process_0ovydzp" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0w060zl</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="validation" name="Validation">
+      <bpmn:incoming>Flow_0w060zl</bpmn:incoming>
+      <bpmn:outgoing>Flow_09pa4uk</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_0w060zl" sourceRef="StartEvent_1" targetRef="validation" />
+    <bpmn:task id="credit" name="Credit">
+      <bpmn:incoming>validation_success</bpmn:incoming>
+      <bpmn:outgoing>Flow_1kpuvi3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_1kpuvi3" sourceRef="credit" targetRef="Gateway_0xjtj38" />
+    <bpmn:task id="temporary" name="Call Notification Workflow">
+      <bpmn:incoming>send_notification</bpmn:incoming>
+      <bpmn:outgoing>Flow_17hx8v9</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="send_notification" name="Send Notifcation" sourceRef="Gateway_0xjtj38" targetRef="temporary" />
+    <bpmn:task id="Activity_0igzrw0" name="Send Reverse Request">
+      <bpmn:incoming>credit_failed</bpmn:incoming>
+      <bpmn:incoming>validation_failed</bpmn:incoming>
+      <bpmn:incoming>Flow_1tjp2u8</bpmn:incoming>
+      <bpmn:outgoing>Flow_07xsai3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="credit_failed" name="Credit Failed" sourceRef="Gateway_0xjtj38" targetRef="Activity_0igzrw0" />
+    <bpmn:exclusiveGateway id="Gateway_0uxzgkk">
+      <bpmn:incoming>Flow_09pa4uk</bpmn:incoming>
+      <bpmn:outgoing>validation_success</bpmn:outgoing>
+      <bpmn:outgoing>validation_failed</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_09pa4uk" sourceRef="validation" targetRef="Gateway_0uxzgkk" />
+    <bpmn:sequenceFlow id="validation_success" name="Validation Success" sourceRef="Gateway_0uxzgkk" targetRef="credit">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=validationFailed=false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="validation_failed" name="Validation Failed" sourceRef="Gateway_0uxzgkk" targetRef="Activity_0igzrw0">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=validationFailed=true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:parallelGateway id="Gateway_0xjtj38">
+      <bpmn:incoming>Flow_1kpuvi3</bpmn:incoming>
+      <bpmn:outgoing>send_notification</bpmn:outgoing>
+      <bpmn:outgoing>credit_failed</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_17hx8v9" sourceRef="temporary" targetRef="Gateway_1kt8t25" />
+    <bpmn:parallelGateway id="Gateway_1kt8t25">
+      <bpmn:incoming>Flow_17hx8v9</bpmn:incoming>
+      <bpmn:incoming>reversal_success</bpmn:incoming>
+      <bpmn:incoming>retry_exhausted</bpmn:incoming>
+      <bpmn:outgoing>Flow_04xny4n</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="Event_0cocwv3">
+      <bpmn:incoming>Flow_04xny4n</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_04xny4n" sourceRef="Gateway_1kt8t25" targetRef="Event_0cocwv3" />
+    <bpmn:exclusiveGateway id="Gateway_1chcql1">
+      <bpmn:incoming>Flow_07xsai3</bpmn:incoming>
+      <bpmn:outgoing>reversal_success</bpmn:outgoing>
+      <bpmn:outgoing>reversal_failed</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_07xsai3" sourceRef="Activity_0igzrw0" targetRef="Gateway_1chcql1" />
+    <bpmn:intermediateCatchEvent id="exponential_timer" name="Exponential Timer">
+      <bpmn:incoming>retry_vailable</bpmn:incoming>
+      <bpmn:outgoing>Flow_1tjp2u8</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0te75vs">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">=timer</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="Flow_1tjp2u8" sourceRef="exponential_timer" targetRef="Activity_0igzrw0" />
+    <bpmn:sequenceFlow id="reversal_success" name="Reversal Success" sourceRef="Gateway_1chcql1" targetRef="Gateway_1kt8t25">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=reversalFailed=false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="Gateway_1dj7jij">
+      <bpmn:incoming>reversal_failed</bpmn:incoming>
+      <bpmn:outgoing>retry_vailable</bpmn:outgoing>
+      <bpmn:outgoing>retry_exhausted</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="reversal_failed" name="Reversal Failed" sourceRef="Gateway_1chcql1" targetRef="Gateway_1dj7jij">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=reversalFailed=true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="retry_vailable" name="Retry Available" sourceRef="Gateway_1dj7jij" targetRef="exponential_timer">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=retry&lt;=maxRetry</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="retry_exhausted" name="Retry Exhausted" sourceRef="Gateway_1dj7jij" targetRef="Gateway_1kt8t25">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=retry&gt;maxRetry</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:group id="Group_1ruhjvu" categoryValueRef="CategoryValue_0o8kiny" />
+    <bpmn:group id="Group_0jtm1r7" categoryValueRef="CategoryValue_1vgn1o2" />
+    <bpmn:group id="Group_0u6kypy" categoryValueRef="CategoryValue_15bky8p" />
+  </bpmn:process>
+  <bpmn:category id="Category_0fo9q8x">
+    <bpmn:categoryValue id="CategoryValue_0o8kiny" value="AMS" />
+  </bpmn:category>
+  <bpmn:category id="Category_07jzxhi">
+    <bpmn:categoryValue id="CategoryValue_1vgn1o2" value="AMS" />
+  </bpmn:category>
+  <bpmn:category id="Category_1q4lwqe">
+    <bpmn:categoryValue id="CategoryValue_15bky8p" value="REVERSE BLOCK" />
+  </bpmn:category>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0ovydzp">
+      <bpmndi:BPMNEdge id="Flow_0w060zl_di" bpmnElement="Flow_0w060zl">
+        <di:waypoint x="215" y="150" />
+        <di:waypoint x="270" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kpuvi3_di" bpmnElement="Flow_1kpuvi3">
+        <di:waypoint x="670" y="150" />
+        <di:waypoint x="715" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1gdhq9n_di" bpmnElement="send_notification">
+        <di:waypoint x="765" y="150" />
+        <di:waypoint x="870" y="150" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="780" y="132" width="81" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0iocg1c_di" bpmnElement="credit_failed">
+        <di:waypoint x="740" y="175" />
+        <di:waypoint x="740" y="310" />
+        <di:waypoint x="870" y="310" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="743" y="283" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09pa4uk_di" bpmnElement="Flow_09pa4uk">
+        <di:waypoint x="370" y="150" />
+        <di:waypoint x="405" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1pwgwyz_di" bpmnElement="validation_success">
+        <di:waypoint x="455" y="150" />
+        <di:waypoint x="570" y="150" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="489" y="137" width="48" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xkeegs_di" bpmnElement="validation_failed">
+        <di:waypoint x="430" y="175" />
+        <di:waypoint x="430" y="330" />
+        <di:waypoint x="870" y="330" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="437" y="313" width="81" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17hx8v9_di" bpmnElement="Flow_17hx8v9">
+        <di:waypoint x="970" y="150" />
+        <di:waypoint x="1055" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04xny4n_di" bpmnElement="Flow_04xny4n">
+        <di:waypoint x="1105" y="150" />
+        <di:waypoint x="1222" y="150" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07xsai3_di" bpmnElement="Flow_07xsai3">
+        <di:waypoint x="970" y="310" />
+        <di:waypoint x="1045" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tjp2u8_di" bpmnElement="Flow_1tjp2u8">
+        <di:waypoint x="1052" y="410" />
+        <di:waypoint x="920" y="410" />
+        <di:waypoint x="920" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sv8trq_di" bpmnElement="reversal_success">
+        <di:waypoint x="1070" y="285" />
+        <di:waypoint x="1070" y="165" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="976" y="243" width="89" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ebxd5p_di" bpmnElement="reversal_failed">
+        <di:waypoint x="1095" y="310" />
+        <di:waypoint x="1205" y="310" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1111" y="292" width="77" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1sgzkuf_di" bpmnElement="retry_vailable">
+        <di:waypoint x="1230" y="335" />
+        <di:waypoint x="1230" y="410" />
+        <di:waypoint x="1088" y="410" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1147" y="423" width="74" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0x7ge5h_di" bpmnElement="retry_exhausted">
+        <di:waypoint x="1230" y="285" />
+        <di:waypoint x="1230" y="250" />
+        <di:waypoint x="1080" y="250" />
+        <di:waypoint x="1080" y="175" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1115" y="232" width="82" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="179" y="132" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0b917k1_di" bpmnElement="validation" bioc:stroke="rgb(30, 136, 229)" bioc:fill="rgb(187, 222, 251)">
+        <dc:Bounds x="270" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0igzrw0_di" bpmnElement="Activity_0igzrw0" bioc:stroke="rgb(229, 57, 53)" bioc:fill="rgb(255, 205, 210)">
+        <dc:Bounds x="870" y="270" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1at30n4_di" bpmnElement="temporary" bioc:stroke="rgb(251, 140, 0)" bioc:fill="rgb(255, 224, 178)">
+        <dc:Bounds x="870" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0uxzgkk_di" bpmnElement="Gateway_0uxzgkk" isMarkerVisible="true">
+        <dc:Bounds x="405" y="125" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_17k503d_di" bpmnElement="Gateway_0xjtj38">
+        <dc:Bounds x="715" y="125" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0d7ng0o_di" bpmnElement="credit" bioc:stroke="rgb(30, 136, 229)" bioc:fill="rgb(187, 222, 251)">
+        <dc:Bounds x="570" y="110" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0cocwv3_di" bpmnElement="Event_0cocwv3" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="1222" y="132" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0vgl6kq_di" bpmnElement="Gateway_1kt8t25">
+        <dc:Bounds x="1055" y="125" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1chcql1_di" bpmnElement="Gateway_1chcql1" isMarkerVisible="true">
+        <dc:Bounds x="1045" y="285" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1dj7jij_di" bpmnElement="Gateway_1dj7jij" isMarkerVisible="true">
+        <dc:Bounds x="1205" y="285" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1mlenr0_di" bpmnElement="exponential_timer">
+        <dc:Bounds x="1052" y="392" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1026" y="435" width="89" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Group_1ruhjvu_di" bpmnElement="Group_1ruhjvu">
+        <dc:Bounds x="250" y="80" width="140" height="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="308" y="87" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Group_0jtm1r7_di" bpmnElement="Group_0jtm1r7">
+        <dc:Bounds x="550" y="80" width="140" height="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="608" y="87" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Group_0u6kypy_di" bpmnElement="Group_0u6kypy">
+        <dc:Bounds x="850" y="200" width="430" height="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1039" y="207" width="53" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
